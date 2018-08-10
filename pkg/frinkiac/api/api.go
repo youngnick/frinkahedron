@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,7 +58,13 @@ func (f *Frinkomatic) Search(query string) ([]Frame, error) {
 }
 
 // ImageURL returns an Image URL given a frame.
-func (f *Frinkomatic) ImageURL(frame Frame) string {
+func (f *Frinkomatic) ImageURL(frame Frame, text string) string {
 
-	return fmt.Sprintf("%v/meme/%v/%v.jpg", f.BaseURL, frame.Episode, frame.Timestamp)
+	param := ""
+	if len(text) > 0 {
+		base64Text := base64.StdEncoding.EncodeToString([]byte(text))
+		param = fmt.Sprintf("?b64lines=%v", base64Text)
+	}
+
+	return fmt.Sprintf("%v/meme/%v/%v.jpg%v", f.BaseURL, frame.Episode, frame.Timestamp, param)
 }

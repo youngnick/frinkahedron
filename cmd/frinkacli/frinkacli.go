@@ -14,12 +14,17 @@ import (
 )
 
 var (
-	verbose = kingpin.Flag("verbose", "Verbose mode.").Short('v').Bool()
-	quote   = kingpin.Arg("name", "Name of user.").Required().String()
+	version    = "undefined"
+	kingpinApp = kingpin.New("frinkacli", "Search a Frinkiac API for ").DefaultEnvars().Version(version)
+
+	quote = kingpinApp.Arg("quote", "Quote to search for").Required().String()
+	text  = kingpinApp.Arg("text", "Text to overlay on the image").Default("").String()
 )
 
 func main() {
-	kingpin.Parse()
+	kingpinApp.VersionFlag.Short('v')
+	kingpinApp.HelpFlag.Short('h')
+	kingpin.MustParse(kingpinApp.Parse(os.Args[1:]))
 
 	frinkiac := api.New("frinkiac", "https://www.frinkiac.com", 24)
 	frames, err := frinkiac.Search(*quote)
@@ -27,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	r, err := http.Get(frinkiac.ImageURL(frames[0]))
+	r, err := http.Get(frinkiac.ImageURL(frames[0], *text))
 	if err != nil {
 		log.Fatal(err)
 	}
