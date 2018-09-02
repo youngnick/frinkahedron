@@ -17,8 +17,11 @@ var (
 	version    = "undefined"
 	kingpinApp = kingpin.New("frinkacli", "Search a Frinkiac API for ").DefaultEnvars().Version(version)
 
-	quote = kingpinApp.Arg("quote", "Quote to search for").Required().String()
-	text  = kingpinApp.Arg("text", "Text to overlay on the image").Default("").String()
+	quote              = kingpinApp.Arg("quote", "Quote to search for").Required().String()
+	text               = kingpinApp.Arg("text", "Text to overlay on the image").Default("").String()
+	frinkiac           = kingpinApp.Flag("frinkiac", "Send the query to Frinkiac").Short('f').Bool()
+	morbotron          = kingpinApp.Flag("morbotron", "Send the query to Morbotron").Short('m').Bool()
+	masterofallscience = kingpinApp.Flag("masterofallscience", "Send the query to Masterofallscience").Short('c').Bool()
 )
 
 func main() {
@@ -26,13 +29,26 @@ func main() {
 	kingpinApp.HelpFlag.Short('h')
 	kingpin.MustParse(kingpinApp.Parse(os.Args[1:]))
 
-	frinkiac := api.New("frinkiac", "https://www.frinkiac.com", 24)
-	frames, err := frinkiac.Search(*quote)
+	var apitarget *api.Frinkomatic
+
+	if *morbotron {
+		apitarget = api.New("morbotron", "https://www.morbotron.com", 24)
+	} else if *masterofallscience {
+		apitarget = api.New("masterofallscience", "https://www.masterofallscience.com", 24)
+	} else {
+		apitarget = api.New("frinkiac", "https://www.frinkiac.com", 24)
+	}
+
+	frames, err := apitarget.Search(*quote)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(frames) == 0 {
+		fmt.Printf("No results found for %s\n", *quote)
+		os.Exit(0)
+	}
 
-	r, err := http.Get(frinkiac.ImageURL(frames[0], *text))
+	r, err := http.Get(apitarget.ImageURL(frames[0], *text))
 	if err != nil {
 		log.Fatal(err)
 	}
