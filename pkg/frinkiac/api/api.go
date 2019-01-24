@@ -57,7 +57,7 @@ func (f *Frinkomatic) Search(query string) ([]Frame, error) {
 	return frames, nil
 }
 
-// ImageURL returns an Image URL given a frame.
+// ImageURL returns an Image URL given a frame, and optionally, text to overlay
 func (f *Frinkomatic) ImageURL(frame Frame, text string) string {
 
 	param := ""

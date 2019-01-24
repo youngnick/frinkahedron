@@ -48,23 +48,39 @@ func main() {
 		os.Exit(0)
 	}
 
-	r, err := http.Get(apitarget.ImageURL(frames[0], *text))
-	if err != nil {
-		log.Fatal(err)
-	}
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	r.Body.Close()
+	if isiTerm() {
+		r, err := http.Get(apitarget.ImageURL(frames[0], *text))
+		if err != nil {
+			log.Fatal(err)
+		}
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		r.Body.Close()
 
-	iTermImgCat(base64.StdEncoding.EncodeToString(body))
+		iTermImgCat(base64.StdEncoding.EncodeToString(body))
+		fmt.Print("\n")
+	}
+
+	fmt.Println(apitarget.ImageURL(frames[0], *text))
+
+}
+
+func isiTerm() bool {
+
+	value, ok := os.LookupEnv("TERM_PROGRAM")
+	if ok && value == "iTerm.app" {
+		return true
+	}
+	return false
 
 }
 
 func iTermImgCat(imagecontents string) {
 	encodedFilename := base64.StdEncoding.EncodeToString([]byte("Frinkiac Image"))
 	fmt.Printf("\n\033]1337;File=%v;inline=1:%v\n\n", encodedFilename, imagecontents)
+	fmt.Print("\n")
 }
 
 func getBase64Image(filename string) string {
