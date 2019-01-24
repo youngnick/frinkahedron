@@ -8,9 +8,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/youngnick/frinkahedron/pkg/frinkiac/api"
-	"gopkg.in/alecthomas/kingpin.v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -18,10 +19,13 @@ var (
 	kingpinApp = kingpin.New("frinkacli", "Search a Frinkiac API for ").DefaultEnvars().Version(version)
 
 	quote              = kingpinApp.Arg("quote", "Quote to search for").Required().String()
+	offset             = kingpinApp.Arg("offset", "Offset from the quote location").Default("0").Duration()
+	length             = kingpinApp.Arg("length", "length of a gif").Default("3s").Duration()
 	text               = kingpinApp.Arg("text", "Text to overlay on the image").Default("").String()
 	frinkiac           = kingpinApp.Flag("frinkiac", "Send the query to Frinkiac").Short('f').Bool()
 	morbotron          = kingpinApp.Flag("morbotron", "Send the query to Morbotron").Short('m').Bool()
 	masterofallscience = kingpinApp.Flag("masterofallscience", "Send the query to Masterofallscience").Short('c').Bool()
+	gifmode            = kingpinApp.Flag("gifmode", "Get a gif instead of an image").Short('g').Bool()
 )
 
 func main() {
@@ -49,18 +53,47 @@ func main() {
 	}
 
 	if isiTerm() {
-		r, err := http.Get(apitarget.ImageURL(frames[0], *text))
-		if err != nil {
-			log.Fatal(err)
-		}
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-		r.Body.Close()
+		var body []byte
+		var err error
+		var r *http.Response
 
-		iTermImgCat(base64.StdEncoding.EncodeToString(body))
-		fmt.Print("\n")
+		if *gifmode {
+			var contextframes []api.Frame
+			contextframes, err = apitarget.ContextFrames(frames[0], *offset, *length)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("Frames:\n%+v", contextframes)
+			gifurl := apitarget.GifURL(contextframes[0], contextframes[len(contextframes)-1], *text)
+			longClient := http.Client{
+				Timeout: time.Duration(120 * time.Second),
+			}
+			fmt.Printf("Gif URL: %v", gifurl)
+			r, err = longClient.Get(gifurl)
+			if err != nil {
+				log.Fatal(err)
+			}
+			body, err = ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			r.Body.Close()
+			iTermImgCat(base64.StdEncoding.EncodeToString(body))
+			fmt.Print("\n")
+		} else {
+			r, err = http.Get(apitarget.ImageURL(frames[0], *text))
+			if err != nil {
+				log.Fatal(err)
+			}
+			body, err = ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			r.Body.Close()
+			iTermImgCat(base64.StdEncoding.EncodeToString(body))
+			fmt.Print("\n")
+		}
+
 	}
 
 	fmt.Println(apitarget.ImageURL(frames[0], *text))
