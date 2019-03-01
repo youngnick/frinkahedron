@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/nlopes/slack"
@@ -39,14 +37,6 @@ func FetchAGif(apitarget *api.Frinkomatic, parsedCommand cmdparser.CommandDetail
 		fmt.Printf("No results found for %s\n", parsedCommand.Quote)
 	}
 
-	if !strings.Contains(parsedCommand.GifLength, "s") {
-		parsedCommand.GifLength += "s"
-	}
-
-	if !strings.Contains(parsedCommand.GifOffset, "s") {
-		parsedCommand.GifOffset += "s"
-	}
-
 	offset, err := time.ParseDuration(parsedCommand.GifOffset)
 	if err != nil {
 		//do an error
@@ -56,8 +46,26 @@ func FetchAGif(apitarget *api.Frinkomatic, parsedCommand cmdparser.CommandDetail
 		//do an error
 	}
 
+	// These are used for the context frames function, we need to figure out
+	// how to populate them correctly.
+	var before time.Duration
+	var after time.Duration
+
+	// how before and after need to be set depends on offset's value
+
+	if offset < 0 {
+		before = offset * -1
+		after = length - offset
+	} else if offset > 0 {
+		before = 0
+		after = length + offset
+	} else {
+		before = 0
+		after = length
+	}
+
 	var contextframes []api.Frame
-	contextframes, err = apitarget.ContextFrames(frames[0], offset, length)
+	contextframes, err = apitarget.ContextFrames(frames[0], before, after)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +81,6 @@ func FetchAGif(apitarget *api.Frinkomatic, parsedCommand cmdparser.CommandDetail
 		fmt.Println(err)
 		return
 	}
-
 	req, err := http.NewRequest("POST", responseURL, bytes.NewBuffer(b))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -84,8 +91,8 @@ func FetchAGif(apitarget *api.Frinkomatic, parsedCommand cmdparser.CommandDetail
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	// fmt.Println("response Status:", resp.Status)
+	// fmt.Println("response Headers:", resp.Header)
+	// body, _ := ioutil.ReadAll(resp.Body)
+	// fmt.Println("response Body:", string(body))
 }

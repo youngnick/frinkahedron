@@ -45,6 +45,14 @@ func Command(commandtext string) (CommandDetails, error) {
 
 	parsedCommand.Quote = commandtext
 
+	if !strings.Contains(parsedCommand.GifLength, "s") {
+		parsedCommand.GifLength += "s"
+	}
+
+	if !strings.Contains(parsedCommand.GifOffset, "s") {
+		parsedCommand.GifOffset += "s"
+	}
+
 	// fmt.Printf("%+v", result)
 
 	return parsedCommand, nil
