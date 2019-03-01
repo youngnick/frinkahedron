@@ -54,7 +54,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/slash/simpsons", slackbot.Simpsons)
+	http.HandleFunc("/stridestyle", slackbot.StrideStyle)
 
 	fmt.Println("[INFO] Server listening")
 	http.ListenAndServe(":3000", nil)

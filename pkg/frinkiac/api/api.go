@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -47,7 +46,7 @@ func (f *Frinkomatic) getFrames(getURL string) ([]Frame, error) {
 		return frames, err
 	}
 	if string(body) == "[]" {
-		return frames, errors.New("No results found for this search")
+		return frames, nil
 	}
 	json.Unmarshal(body, &frames)
 	return frames, nil

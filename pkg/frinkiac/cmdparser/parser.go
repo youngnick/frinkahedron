@@ -11,6 +11,7 @@ type CommandDetails struct {
 	GifLength   string `json:"giflength"`
 	GifOffset   string `json:"gifoffset"`
 	OverlayText string `json:"overlaytext"`
+	Original    string `json:"original"`
 }
 
 // Command parses a standard command test and returns a CommandDetails struct with all the deets
@@ -18,6 +19,8 @@ type CommandDetails struct {
 func Command(commandtext string) (CommandDetails, error) {
 
 	var parsedCommand CommandDetails
+
+	parsedCommand.Original = commandtext
 
 	// Let's tokenise this using the delimiters, that'll make this parsing easier.
 	// super fragile parsing up ahead!
