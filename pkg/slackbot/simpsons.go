@@ -45,7 +45,7 @@ func StrideStyle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if parsed.GifLength != "" {
+	if parsed.GifLength != "s" {
 		// We've been asked for a gif
 		// First, respond to slack in this goroutine, then start a new
 		// goroutine to return the gif (it will take a while)
