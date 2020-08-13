@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +21,7 @@ var (
 	offset             = kingpinApp.Arg("offset", "Offset from the quote location").Default("0").Duration()
 	length             = kingpinApp.Arg("length", "length of a gif").Default("3s").Duration()
 	text               = kingpinApp.Arg("text", "Text to overlay on the image").Default("").String()
+	iterm              = kingpinApp.Flag("iterm", "Print the image using iTerm escape printing").Short('i').Bool()
 	frinkiac           = kingpinApp.Flag("frinkiac", "Send the query to Frinkiac").Short('f').Bool()
 	morbotron          = kingpinApp.Flag("morbotron", "Send the query to Morbotron").Short('m').Bool()
 	masterofallscience = kingpinApp.Flag("masterofallscience", "Send the query to Masterofallscience").Short('c').Bool()
@@ -35,6 +35,11 @@ func main() {
 
 	var apitarget *api.Frinkomatic
 
+	// Attempt to autodetect if you're using iTerm
+	value, ok := os.LookupEnv("LC_TERMINAL")
+	if ok && value == "iTerm2" {
+		*iterm = true
+	}
 	if *morbotron {
 		apitarget = api.New("morbotron", "https://www.morbotron.com", 24)
 	} else if *masterofallscience {
@@ -75,7 +80,7 @@ func main() {
 		}
 		r.Body.Close()
 		fmt.Printf("%v\n", gifurl)
-		if isiTerm() {
+		if *iterm {
 			iTermImgCat(base64.StdEncoding.EncodeToString(body))
 			fmt.Print("\n")
 		}
@@ -90,7 +95,7 @@ func main() {
 		}
 		r.Body.Close()
 		fmt.Println(apitarget.ImageURL(frames[0], *text))
-		if isiTerm() {
+		if *iterm {
 			iTermImgCat(base64.StdEncoding.EncodeToString(body))
 			fmt.Print("\n")
 		}
@@ -99,39 +104,8 @@ func main() {
 
 }
 
-func isiTerm() bool {
-
-	value, ok := os.LookupEnv("TERM_PROGRAM")
-	if ok && value == "iTerm.app" {
-		return true
-	}
-	return false
-
-}
-
 func iTermImgCat(imagecontents string) {
-	encodedFilename := base64.StdEncoding.EncodeToString([]byte("Frinkiac Image"))
-	fmt.Printf("\n\033]1337;File=%v;inline=1:%v\n\n", encodedFilename, imagecontents)
 	fmt.Print("\n")
-}
-
-func getBase64Image(filename string) string {
-	imgFile, err := os.Open(filename)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer imgFile.Close()
-
-	fInfo, _ := imgFile.Stat()
-	size := fInfo.Size()
-
-	buf := make([]byte, size)
-
-	fReader := bufio.NewReader(imgFile)
-	fReader.Read(buf)
-
-	return base64.StdEncoding.EncodeToString(buf)
-
+	fmt.Printf("\033]1337;File=inline=1:%v\a\n", imagecontents)
+	fmt.Print("\n")
 }
