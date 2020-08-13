@@ -52,51 +52,50 @@ func main() {
 		os.Exit(0)
 	}
 
-	if isiTerm() {
-		var body []byte
-		var err error
-		var r *http.Response
+	var body []byte
+	var r *http.Response
 
-		if *gifmode {
-			var contextframes []api.Frame
-			contextframes, err = apitarget.ContextFrames(frames[0], *offset, *length)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("Frames:\n%+v", contextframes)
-			gifurl := apitarget.GifURL(contextframes[0], contextframes[len(contextframes)-1], *text)
-			longClient := http.Client{
-				Timeout: time.Duration(120 * time.Second),
-			}
-			fmt.Printf("Gif URL: %v", gifurl)
-			r, err = longClient.Get(gifurl)
-			if err != nil {
-				log.Fatal(err)
-			}
-			body, err = ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			r.Body.Close()
+	if *gifmode {
+		var contextframes []api.Frame
+		contextframes, err = apitarget.ContextFrames(frames[0], *offset, *length)
+		if err != nil {
+			log.Fatal(err)
+		}
+		gifurl := apitarget.GifURL(contextframes[0], contextframes[len(contextframes)-1], *text)
+		longClient := http.Client{
+			Timeout: time.Duration(120 * time.Second),
+		}
+		r, err = longClient.Get(gifurl)
+		if err != nil {
+			log.Fatal(err)
+		}
+		body, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		r.Body.Close()
+		fmt.Printf("%v\n", gifurl)
+		if isiTerm() {
 			iTermImgCat(base64.StdEncoding.EncodeToString(body))
 			fmt.Print("\n")
-		} else {
-			r, err = http.Get(apitarget.ImageURL(frames[0], *text))
-			if err != nil {
-				log.Fatal(err)
-			}
-			body, err = ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Fatal(err)
-			}
-			r.Body.Close()
+		}
+	} else {
+		r, err = http.Get(apitarget.ImageURL(frames[0], *text))
+		if err != nil {
+			log.Fatal(err)
+		}
+		body, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		r.Body.Close()
+		fmt.Println(apitarget.ImageURL(frames[0], *text))
+		if isiTerm() {
 			iTermImgCat(base64.StdEncoding.EncodeToString(body))
 			fmt.Print("\n")
 		}
 
 	}
-
-	fmt.Println(apitarget.ImageURL(frames[0], *text))
 
 }
 
